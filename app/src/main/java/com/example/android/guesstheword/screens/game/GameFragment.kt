@@ -24,6 +24,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment
 import com.example.android.guesstheword.R
@@ -41,7 +42,7 @@ class GameFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         // Inflate view and obtain an instance of the binding class
         binding = DataBindingUtil.inflate(
@@ -51,9 +52,27 @@ class GameFragment : Fragment() {
             false
         )
 
-        Log.i("GameFragment", "GameFragment Created")
-
+        //inisialisasi viewModel
         viewModel = ViewModelProvider(this)[GameViewModel::class.java]
+
+        //Menguhubungkan LivewData Score dengan Observer
+        viewModel.eventGameFinish.observe(viewLifecycleOwner, Observer { hasFinished ->
+            if (hasFinished == true) {
+                gameFinisher()
+            }
+        })
+
+        //Menguhubungkan LivewData Score dengan Observer
+        viewModel.score.observe(viewLifecycleOwner, Observer { newScore ->
+            binding.scoreText.text = newScore.toString()
+        })
+
+        //Menguhubungkan LivewData Word dengan Observer
+        viewModel.word.observe(viewLifecycleOwner, Observer { newWord ->
+            binding.wordText.text = newWord
+        })
+
+        Log.i("GameFragment", "GameFragment Created")
 
 //        viewModel.resetList()
 //        viewModel.nextWord()
@@ -64,8 +83,8 @@ class GameFragment : Fragment() {
             gameFinisher()
         }
 
-        updateScoreText()
-        updateWordText()
+//        updateScoreText()
+//        updateWordText()
 
         return binding.root
 
@@ -74,30 +93,32 @@ class GameFragment : Fragment() {
     private fun gameFinisher() {
         Toast.makeText(activity, "Game has just finished", Toast.LENGTH_SHORT).show()
         val action = GameFragmentDirections.actionGameToScore()
-        action.score = viewModel.score
+        action.score = viewModel.score.value ?: 0
         NavHostFragment.findNavController(this).navigate(action)
+        viewModel.onGameFinishComplete()
     }
 
     fun onSkip() {
         viewModel.onSkip()
-        updateScoreText()
-        updateWordText()
+//        updateScoreText()
+//        updateWordText()
     }
 
     fun onCorrect() {
         viewModel.onCorrect()
-        updateScoreText()
-        updateWordText()
+//        updateScoreText()
+//        updateWordText()
     }
 
     /** Methods for updating the UI **/
 
-    private fun updateWordText() {
-        binding.wordText.text = viewModel.word
-        Log.i("infoWord", viewModel.word)
-    }
-
-    private fun updateScoreText() {
-        binding.scoreText.text = viewModel.score.toString()
-    }
+    //dengan menambahkan Observer method ini tidak di perlukanlagi
+//    private fun updateWordText() {
+//        binding.wordText.text = viewModel.word.value
+//        Log.i("infoWord", viewModel.word.value!!)
+//    }
+//
+//    private fun updateScoreText() {
+//        binding.scoreText.text = viewModel.score.value.toString()
+//    }
 }
